@@ -2,14 +2,21 @@
 from datetime import datetime, timezone
 
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
-
+from ml.predict import predict_congestion
 app = FastAPI(
     title="TrafficSense AI",
     description="Traffic Congestion Prediction System",
     version="1.0.0",
 )
-
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 # Sample development data, not live traffic.
 ROADS = [
     {
@@ -126,4 +133,27 @@ def add_traffic_record(record: TrafficRecord):
     return {
         "message": "Traffic record added",
         "traffic": new_record,
+    }
+class PredictionInput(BaseModel):
+    vehicle_count: int = Field(ge=0)
+    average_speed: float = Field(ge=0, le=250)
+    rainfall: float = Field(ge=0)
+    hour: int = Field(ge=0, le=23)
+    active_incident: int = Field(ge=0, le=1)
+
+
+@app.post("/api/predict")
+def predict_traffic(input_data: PredictionInput):
+    result = predict_congestion(
+        input_data.vehicle_count,
+        input_data.average_speed,
+        input_data.rainfall,
+        input_data.hour,
+        input_data.active_incident
+    )
+
+    return {
+        "status": "success",
+        "data_mode": "simulated_model",
+        "prediction": result
     }
