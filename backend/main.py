@@ -157,3 +157,12 @@ def predict_traffic(input_data: PredictionInput):
         "data_mode": "simulated_model",
         "prediction": result
     }
+@app.get("/api/live-status")
+def live_status():
+    return {
+        "backend": "online",
+        "traffic_data": "demo",
+        "weather_data": "not_connected",
+        "incident_data": "not_connected",
+        "message": "TrafficSense AI backend is running"
+    }
